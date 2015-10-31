@@ -19,6 +19,10 @@ app.get('/halloween-haiku/data', function (req, res) {
   });
 });
 
+app.get('/halloween-haikus', function (req, res){
+  res.sendfile(__dirname + '../halloween_haiku_website/index.html');
+});
+
 var server = server.listen(80, function () {
   var host = server.address().address;
   var port = server.address().port;
