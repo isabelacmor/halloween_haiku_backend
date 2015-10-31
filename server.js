@@ -1,15 +1,43 @@
-var io = require('socket.io')(80);
 var cfg = require('./config.json');
 var tw = require('node-tweet-stream')(cfg);
 var syllable = require('syllable');
 var redis = require("redis").createClient();
+var app = require('express')();
+var server = require('http').Server(app);
+var io = require('socket.io')(server);
+
+app.get('/halloween-haiku/data', function (req, res) {
+  redis.LRANGE("haikus", 0, -1, function(err, replies){
+    if(err){
+      res.send('Error');
+    }else {
+      for(var i = 0; i < replies.length; i++){
+        replies[i] = JSON.parse(replies[i]);
+      }
+      res.send(replies);
+    }
+  });
+});
+
+var server = server.listen(80, function () {
+  var host = server.address().address;
+  var port = server.address().port;
+
+  console.log('Example app listening at http://%s:%s', host, port);
+});
 
 redis.on("error", function (err) {
     console.log("Error " + err);
 });
 
-var tweetWith5 = {};
-var tweetWith7 = {};
+var tweetWith5 = {
+  tweet:"Happy Halloween!",
+  url:"https://twitter.com/TylerLeonhardt/status/660323832343957504"
+};
+var tweetWith7 = {
+  tweet:"halloween is tomorrow!",
+  url:"https://twitter.com/TylerLeonhardt/status/660302794352664576"
+};
 
 tw.track('#halloween');
 tw.on('tweet', function(tweet){
@@ -36,7 +64,7 @@ function trimTweet(text){
   text = text.replace(noLinks, "");
 
   //remove non alphanumeric chars
-  text = text.replace(/[\W_]/g, ' ');
+  text = text.replace(/[\W_!.]/g, ' ');
 
   //remove extra whitespace
   text = text.replace(/\s\s+/g, ' ');
@@ -80,10 +108,11 @@ function start(){
       tweetWith7:tweetWith7,
       today:getDate()
     }
-    console.log(data);
 
-    redis.rpush("haikus", JSON.stringify(data), function(){
+    redis.lpush("haikus", JSON.stringify(data), function(){
       console.log(data);
+      io.emit('tweet', data);
+      redis.ltrim("haikus", 0, 49);
     });
     start();
   }, 30000);
