@@ -6,7 +6,7 @@ var app = require('express')();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
-app.get('/', function (req, res) {
+app.get('/halloween-haiku/data', function (req, res) {
   redis.LRANGE("haikus", 0, -1, function(err, replies){
     if(err){
       res.send('Error');
