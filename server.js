@@ -19,9 +19,7 @@ app.get('/halloween-haiku/data', function (req, res) {
   });
 });
 
-app.get('/halloween-haikus', function (req, res){
-  res.sendfile(__dirname + '../halloween_haiku_website/index.html');
-});
+app.use(express.static(__dirname + '/public'));
 
 var server = server.listen(80, function () {
   var host = server.address().address;
@@ -45,7 +43,6 @@ var tweetWith7 = {
 
 tw.track('#halloween');
 tw.on('tweet', function(tweet){
-  io.emit('tweet', tweet.text);
   var trimmedTweet = trimTweet(" " + tweet.text);
   var syl = getSyllables(trimmedTweet);
   if(!trimmedTweet.match(/\s+RT\s+|[0-9]/g)){
